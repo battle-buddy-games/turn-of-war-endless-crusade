@@ -1,0 +1,55 @@
+# =============================================================================
+# Deploy Prebuilt Site to GitHub Pages
+# =============================================================================
+# Built output lives at repository root (index.html at root, not inside public/).
+# The platform pushes content updates to this repository. This workflow
+# then deploys the site automatically.
+
+name: Deploy Prebuilt Site
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Validate prebuilt output
+        run: |
+          if [ ! -f "./index.html" ]; then
+            echo "Expected ./index.html at repository root but it was not found."
+            exit 1
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
