@@ -1,0 +1,22 @@
+/* =============================================================================
+   Generated skin overlay -- layered on top of static/css/style.css.
+   Source: static-site-system/skins/<name>/skin.json. Do not hand-edit; this file
+   is regenerated on every site build.
+   ============================================================================= */
+
+:root {
+  --color-bg: #0d0b08;
+  --color-bg-secondary: #171310;
+  --color-bg-card: #1f1a15;
+  --color-border: #3a3025;
+  --color-text: #ece4d8;
+  --color-text-muted: #a89a86;
+  --color-link: #c9a24b;
+  --color-link-hover: #e0bc6a;
+  --color-accent: #c9a24b;
+  --color-accent-bg: rgba(201, 162, 75, 0.12);
+  --color-tag-bg: #2a2118;
+  --color-tag-text: #c9b98f;
+  --font-heading: 'Cinzel', Georgia, 'Times New Roman', serif;
+  --font-body: 'Spectral', Georgia, 'Times New Roman', serif;
+}

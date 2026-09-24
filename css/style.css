@@ -31,6 +31,18 @@
   --content-width: 800px;
   --radius: 6px;
   --transition: 0.2s ease;
+
+  /* Ambient hero pattern (standard, non-heroImage layout variant only) -- a subtle CSS-only
+     tactical/campaign-map grid drawn from the accent color, so a skin with no hero art still gets
+     a distinct, tasteful visual signature. Overridable per skin via the "hero-pattern-opacity"
+     palette key (see SiteSkinResolver.BuildSkinCss -- any palette key is emitted verbatim). */
+  --hero-pattern-opacity: 0.05;
+
+  /* Typography variables -- overridable by a per-game skin's static/css/skin.css (loaded after
+     this stylesheet). Defaults below reproduce the pre-skin-system look byte-for-byte. */
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  --font-heading: var(--font-body);
 }
 
 html {
@@ -39,14 +51,16 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  font-family: var(--font-body);
   background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.6;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -59,9 +73,22 @@ a:hover {
   color: var(--color-link-hover);
 }
 
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.nav-cta:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 img {
   max-width: 100%;
   height: auto;
+}
+
+:target {
+  scroll-margin-top: 84px;
 }
 
 /* -- Header -- */
@@ -176,13 +203,34 @@ img {
 
 /* -- Hero (home page) -- */
 .hero {
+  position: relative;
+  overflow: hidden;
   text-align: center;
   padding: 5rem 0 3rem;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 3rem;
 }
 
+/* Ambient tactical/campaign-map grid -- CSS-only, no image asset. Only shown on the "standard"
+   (non-heroImage) layout variant, so a skin that supplies real hero art never has this pattern
+   fighting the image underneath it. */
+.hero:not(.hero-image-variant)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--hero-pattern-opacity);
+  background-image:
+    repeating-linear-gradient(0deg, var(--color-accent) 0, var(--color-accent) 1px, transparent 1px, transparent 64px),
+    repeating-linear-gradient(90deg, var(--color-accent) 0, var(--color-accent) 1px, transparent 1px, transparent 64px);
+}
+
+.hero > * {
+  position: relative;
+}
+
 .hero h1 {
+  font-family: var(--font-heading);
   font-size: 3rem;
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -191,6 +239,47 @@ img {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* -- Hero image layout variant (skin.layoutVariant == "heroImage") --
+   Structurally different from the standard text-only hero above: a full-bleed background image
+   with a dark overlay gradient behind the same heading/content/CTA markup, so hero art can be
+   layered on without duplicating the hero's inner HTML. */
+.hero.hero-image-variant {
+  background-size: cover;
+  background-position: center;
+  border-bottom: none;
+  padding: 0;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.hero.hero-image-variant .hero-overlay {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.75) 100%);
+  padding: 6rem 1.5rem 4rem;
+}
+
+.hero.hero-image-variant h1 {
+  background: none;
+  -webkit-text-fill-color: initial;
+  color: #fff;
+}
+
+.hero.hero-image-variant .hero-content {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Optional site tagline (platform customization: CustomizationJson.tagline). */
+.hero-tagline {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: -0.5rem 0 1.25rem;
+}
+
+.hero.hero-image-variant .hero-tagline {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .hero-content {
@@ -257,6 +346,7 @@ img {
 }
 
 .recent-news h2 {
+  font-family: var(--font-heading);
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
   padding-bottom: 0.5rem;
@@ -269,6 +359,7 @@ img {
 }
 
 .page-header h1 {
+  font-family: var(--font-heading);
   font-size: 2rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -376,11 +467,13 @@ img {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 1.5rem;
-  transition: border-color var(--transition);
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
 }
 
 .news-card:hover {
   border-color: var(--color-accent);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 .news-card h2, .news-card h3 {
@@ -473,6 +566,153 @@ img {
   margin-top: 0.5rem;
 }
 
+/* -- Roadmap (list page + homepage teaser) -- */
+.roadmap-teaser,
+.roadmap-list {
+  padding: 0 0 2rem;
+}
+
+.roadmap-teaser h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.roadmap-teaser-grid,
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.roadmap-teaser-card,
+.roadmap-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.roadmap-teaser-card:hover,
+.roadmap-card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.roadmap-teaser-card h3,
+.roadmap-card h2 {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  margin: 0.5rem 0 0.5rem;
+}
+
+.roadmap-teaser-card p,
+.roadmap-summary {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.roadmap-status {
+  display: inline-block;
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.section-more-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* -- Gallery (list page + homepage preview) -- */
+.gallery-preview,
+.gallery-list {
+  padding: 0 0 2rem;
+}
+
+.gallery-preview h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.gallery-preview-grid,
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.gallery-tile {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 0.75rem;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.gallery-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+/* Four generated gradient variants, cycling by index -- placeholder "screenshot slots" until real
+   captured art replaces them. Deliberately abstract (never claims to depict real gameplay). */
+.gallery-tile-v0 { background: linear-gradient(135deg, var(--color-bg-card) 0%, var(--color-accent-bg) 100%); }
+.gallery-tile-v1 { background: linear-gradient(135deg, var(--color-accent-bg) 0%, var(--color-bg-secondary) 100%); }
+.gallery-tile-v2 { background: radial-gradient(circle at 30% 20%, var(--color-accent-bg) 0%, var(--color-bg-card) 70%); }
+.gallery-tile-v3 { background: linear-gradient(200deg, var(--color-bg-secondary) 0%, var(--color-accent-bg) 60%, var(--color-bg-card) 100%); }
+
+.gallery-tag {
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--color-text);
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.gallery-placeholder-badge {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--color-text-muted);
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.gallery-list figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 /* -- Footer -- */
 .site-footer {
   background: var(--color-bg-secondary);
@@ -527,6 +767,10 @@ img {
     padding: 3rem 0 2rem;
   }
 
+  .hero.hero-image-variant .hero-overlay {
+    padding: 3.5rem 1rem 2.5rem;
+  }
+
   .hero h1 {
     font-size: 2rem;
   }
@@ -540,7 +784,49 @@ img {
     align-items: center;
   }
 
-  .news-grid {
+  .news-grid,
+  .roadmap-teaser-grid,
+  .roadmap-grid,
+  .gallery-preview-grid,
+  .gallery-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-main {
+    padding: 1.5rem 1rem;
+  }
+
+  .hero {
+    padding: 2.25rem 0 1.5rem;
+  }
+
+  .hero.hero-image-variant .hero-overlay {
+    padding: 2.5rem 1rem 2rem;
+  }
+
+  .hero h1 {
+    font-size: 1.65rem;
+  }
+
+  .hero-content {
+    font-size: 0.95rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .news-card,
+  .roadmap-teaser-card,
+  .roadmap-card {
+    padding: 1.1rem;
+  }
+
+  .gallery-preview-grid,
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
   }
 }
